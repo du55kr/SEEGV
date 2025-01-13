@@ -4,7 +4,7 @@ from SEEGV.models import Profile,Members, MemberJoinDate,Point,Terms,Agreement,R
 from datetime import datetime
 from json import dumps
 import json
-
+import random
 
 
 
@@ -83,30 +83,71 @@ def movielogdelete(request):
 
     return JsonResponse({'message': 'Preview saved successfully'})
 
-#------------------------
-
-
-
-
-
+#--------------현교꺼----------
+def admin_get_win(request):
+    code = request.GET.get("code")
+    apply_members = ApplyMember.objects.filter(event_no_id=int(code), aM_win=1)
+    listwin = []
+    for apply in apply_members:
+        listwin.append(apply.member_no.member_id)
+        if not listwin:
+            return JsonResponse({"success": False, "message": "당첨자가 없습니다"})
+    return JsonResponse({"success": True, "message": listwin})
+def set_win(request):
+    # GET 요청으로 전달된 code 값을 가져옵니다.
+    code = request.GET.get("code")
+    print
+    try:
+        # 특정 이벤트에 해당하는 ApplyMember 객체들을 가져옵니다.
+        apply_members = ApplyMember.objects.filter(event_no_id=code)
+        
+        # ApplyMember가 없는 경우 처리
+        if not apply_members.exists():
+            return JsonResponse({"success": False, "message": "응모자가 없습니다"})
+        # 모두 0으로 만듬(탈락자와 미추첨을 나누기 위해)
+        apply_members.update(aM_win=False)
+        # QuerySet을 리스트로 변환하여 랜덤하게 한 명 선택
+        apply_members_list = list(apply_members)
+        winner = random.choice(apply_members_list)
+        # 선택된 사람의 aM_win 값을 True(1)로 설정
+        winner.aM_win = True
+        winner.save()
+        return JsonResponse({"success": True, "message": "당첨자가 적용되었습니다"})
+    except Exception as e:
+        return JsonResponse({"success": False, "message": "error"})
 def get_win(request):
     login = request.session.get("login")
     code = request.GET.get("code")
     try:
-        apply = ApplyMember.objects.get(event_no_id=int(code),member_no_id=int(login),aM_win=1)
-        return JsonResponse({'indata':True})
-    except :
-        return JsonResponse({'indata':False})
+        apply = ApplyMember.objects.get(event_no_id=int(code), member_no_id=int(login))
+        aM_win = apply.aM_win
+        if aM_win == 1:
+            return JsonResponse({'indata': True, 'message': "당첨되었습니다!"})
+        elif aM_win == 0:
+            return JsonResponse({'indata': False, 'message': "당첨되지 않았습니다."})
+        else:  
+            return JsonResponse({'indata': None, 'message': "결과 발표 전입니다."})
+    except ApplyMember.DoesNotExist:
+        return JsonResponse({'indata': False, 'message': "등록된 정보가 없습니다."})
 def myevent(request:HttpRequest):
     login = request.session.get("login")
     member = Members.objects.get(pk=int(login))
     apevent = ApplyMember.objects.filter(member_no=member.member_no)
+    #adevent = ApplyMember.objects.filter(event_no__isnull=False).distinct('event_no').order_by('event_no')
+    adevent = ApplyMember.objects.all().order_by('aM_NO')
     nowdate = timezone.now().date()
+    seen_events = set()
+    unique_adevent = []
+    for event in adevent:
+        if event.event_no.event_no not in seen_events: #event_no_id 중복되지 않으면
+            seen_events.add(event.event_no.event_no)   #중복을 검사하기위해 추가
+            unique_adevent.append(event)               #중복되지 않은 event 추가     
     context ={
         'login':login,
         'member':member,
         'apevent' :apevent,
-        'nowdate':nowdate
+        'nowdate':nowdate,
+        'adevent':unique_adevent,
     }
     return render(request,'mycgv_event.html',context)
 # Create your views here.

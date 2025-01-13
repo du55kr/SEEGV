@@ -43,11 +43,11 @@ def event(request:HttpRequest):
     tl = Theater.objects.all()
     login = request.session.get('login')
     try:
-        list=Event.objects.all().distinct().order_by('event_no')
+        list=Event.objects.all().distinct().order_by('event_no') #db중복없이 가져오기(이벤트)
         theater_code = int(request.GET.get('theatercode','0'))
         code = int(request.GET.get('code','1'))
         page = int(request.GET.get('page','1'))
-        pageR = page*3
+        pageR = page*6
         if code ==1:
             ec = EventCategory.objects.filter(ek_no2_id__in=[1,5])
         elif code == 2:
@@ -111,7 +111,7 @@ def benefit(request:HttpRequest):
     login = request.session.get('login')
     code = int(request.GET.get('code','1'))
     page = int(request.GET.get('page','1'))
-    pageR = page*3
+    pageR = page*6
     list=Event.objects.all()
     instance = EventCategory.objects.filter(ek_no2_id=7).order_by('event_no')
     ec = EventCategory.objects.filter(ek_no2_id__in=[7,8,9,10])

@@ -77,6 +77,8 @@ urlpatterns = [
     path('mycgv/myevent/result/',views.myeventresult),
     path('mycgv/myevent/detail/',views.myeventdetail),
     path('get_win/',views.get_win),
+    path('set_win/',views.set_win),
+    path('admin_get_win/',views.admin_get_win),
 
     #--민국--
     path('check_login/',views.check_login),

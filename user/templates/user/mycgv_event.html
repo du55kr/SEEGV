@@ -20,16 +20,57 @@
                 type:'GET',
                 data:{'code':a},
                 success: function(data){
-                    if(data.indata){
-                        alert("당첨되었습니다");
+                    if (data.indata === true) {
+                alert(data.message);  // "당첨되었습니다!"
+                    } else if (data.indata === false) {
+                        alert(data.message);  // "당첨되지 않았습니다."
+                    } else {
+                        alert(data.message);  // "결과 발표 전입니다."
                     }
-                    else{
-                        alert("당첨되지않았습니다.");
-                    }
-                }
+                        }
             });
         });
+        $("button[id^='btnadmin_']").click(function () {
+            var a = $(this).attr('value');
+            $.ajax({
+                url: '/user/set_win/',
+                type: 'GET',
+                data: { 'code': a },
+                success: function (data) {
+                    if (data.success) {
+                        alert(data.message);
+
+                        location.reload();
+                    } else {
+                        alert(data.message);
+                    }
+                },
+                error: function () {
+                    alert("Error processing request.");
+                }
+             });
+        });
+        $("button[id^='btnadmin2_']").click(function(){
+            var a = $(this).attr('value');
+            $.ajax({
+                url: '/user/admin_get_win/',
+                type: 'GET',
+                data: { 'code': a },
+                success: function (data) {
+                    if (data.success) {
+                        alert(data.message);
+                        location.reload();
+                    } else {
+                        alert(data.message);
+                    }
+                },
+                error: function () {
+                    alert("Error processing request.");
+                }
+             });
+        });
     });
+
 </script>
 {% endblock %}
 {% block body_main_mycgv %}
@@ -43,11 +84,43 @@
     <label class="btn btn-outline-danger" for="btnradio2">당첨자 발표</label>
 </div>
     <hr>
-    {% for event in apevent %}
+    {% if member.memberType_no_id == 1 %} <!-- 관리자라면-->
+        {% for event in adevent %}
+            <div class="row mb-3">
+                <div class="col-md-3">
+                    <img src="{{ event.event_no.event_faceimg.url|default:'' }}" 
+                         style="width: 80%; height: auto; margin-right: 0;" 
+                         alt="{{ event.event_no.ebc_name|default:'이미지 없음' }}">
+                </div>
+                <div class="col-md-9 d-flex align-items-center justify-content-between">
+                    <div>
+                        <p class="mb-0">{{ event.event_no.ebc_name }}</p>
+                        <p class="mb-0">기간: {{ event.event_no.event_start }} ~ {{ event.event_no.event_end }}</p>
+                    </div>
+                    <div style="margin-right: 20%;">
+                        <button type="button" class="btn btn-danger mb-3" 
+                                id="btnadmin_{{ event.event_no.event_no }}" 
+                                style="width:180%; height: 40px;" 
+                                value="{{ event.event_no.event_no }}">당첨추첨</button>
+                        <button type="button" class="btn btn-danger mb-3" 
+                                id="btnadmin2_{{ event.event_no.event_no }}" 
+                                style="width:180%; height: 40px;" 
+                                value="{{ event.event_no.event_no }}">당첨자알림</button>
+                    </div>
+                </div>
+            </div>
+            <hr>
+        {% endfor %}
+    {% endif %}
 
+<!-- 사용자용 이벤트 -->
+{% if member.memberType_no_id != 1 %}
+    {% for event in apevent %}
     <div class="row mb-3">
         <div class="col-md-3">
-            <img src="{{ event.event_no.event_faceimg.url }}" style="width: 80%; height: auto; margin-right: 0;" alt="{{ event.ebc_name }}">
+            <img src="{{ event.event_no.event_faceimg.url|default:'' }}" 
+                 style="width: 80%; height: auto; margin-right: 0;" 
+                 alt="{{ event.event_no.ebc_name|default:'이미지 없음' }}">
         </div>
         <div class="col-md-9 d-flex align-items-center justify-content-between">
             <div>
@@ -56,14 +129,18 @@
             </div>
             {% if event.event_no.event_Announce <= nowdate %}
             <div style="margin-right: 20%;">
-                <button type="button" class="btn btn-danger mb-3" id="btnradio3_{{event.event_no.event_no}}" style="width:180%; height: 40px;" value="{{event.event_no.event_no}}">당첨확인 </button>
+                <button type="button" class="btn btn-danger mb-3" 
+                        id="btnradio3_{{ event.event_no.event_no }}" 
+                        style="width:180%; height: 40px;" 
+                        value="{{ event.event_no.event_no }}">당첨확인</button>
             </div>
+            
             {% endif %}
-
         </div>
     </div>
     <hr>
     {% endfor %}
+{% endif %}
 </div>
 {% endblock %}
 
